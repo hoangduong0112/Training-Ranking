@@ -1,10 +1,12 @@
-from rest_framework import serializers
+from rest_framework import serializers, request
 
 from . import models
-from .models import Department, Klass, Semester, User, Statute, Student, Activity, Like, Comment, Bulletin
+from .models import Department, Klass, Semester, User, Statute, Student, Activity, Like, Comment, Bulletin, \
+    StudentActivity, MissingActivityReport
 from .validators import *
 
-#Image serializer
+
+# Image serializer
 class ImageSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -16,34 +18,35 @@ class ImageSerializer(serializers.ModelSerializer):
 class KlassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Klass
-        fields = '__all__'
+        fields = ['id', 'klass_name', 'department']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
-        fields = '__all__'
+        fields = ['id','department_name']
 
 
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
-        field = '__all__'
-
+        field = ['id', 'semester_name', 'description', 'is_finished']
 
 
 class StatuteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Statute
-        field = '__all__'
+        field = ['id', 'statute_name', 'max_point', 'description']
+
 
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = ['student_code', 'phone', 'student_class', 'student_department']
 
+
 class UserSerializer(serializers.ModelSerializer):
-    #Khong can thiet
+    # Khong can thiet
     USER_CHOICES = (
         ('SV', 'Sinh Viên'),
         ('TLSV', 'Trợ Lý Sinh Viên'),
@@ -52,6 +55,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     user_role = serializers.ChoiceField(choices=USER_CHOICES, validators=[validate_user_role])
     email = serializers.CharField(validators=[validate_email])
+
     class Meta:
         model = User
         fields = ['email', 'password', 'avatar', 'user_role']
@@ -67,31 +71,45 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class StudentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Student
-        fields = ['student_code', 'phone', 'student_class', 'student_department']
-
-class UserRegistrationSerializer(serializers.Serializer):
-    user = UserSerializer()
-    student = StudentSerializer()
-
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = User.objects.create_user(**user_data)
-        student_data = validated_data.pop('student')
-        student = Student.objects.create(user=user, **student_data)
-        return user
 
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
-        fields = ['id', 'name', 'time','location', 'description', 'points', 'assistant_creator']
+        fields = ['id', 'title', 'date_register', 'location', 'description', 'points', 'statute', 'assistant_creator']
+        read_only_fields = ['assistant_creator']
+        date_register = serializers.DateTimeField(format='%Y-%m-%d %H:%M', input_formats=['%Y-%m-%d %H:%M'])
 
-        time = serializers.DateTimeField(format='%Y-%m-%d %H:%M', input_formats=['%Y-%m-%d %H:%M'])
-        expiration_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M', input_formats=['%Y-%m-%d %H:%M'])
+    # def create(self, validated_data):
+    #     request = self.context.get("request")
+    #     validated_data['assistant_creator'] = request.user
+    #     activity = Activity.objects.create(**validated_data)
+    #     activity.save()
+    #
+    #     return activity
 
-#interaction
+
+class StudentActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentActivity
+        fields = ['student', 'activity', 'semester', 'status']
+        read_only_fields = ['status']
+
+    def create(self, validated_data):
+        validated_data['status'] = 'registered'
+
+        return super().create(validated_data)
+class StudentActivityDetailSerializer(serializers.ModelSerializer):
+    activity = ActivitySerializer()
+
+    class Meta:
+        model = StudentActivity
+        fields = ['activity', 'status']
+
+class CSVUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+
+# interaction
 class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
@@ -103,10 +121,13 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
 
+
 class BulletinSerializer(ImageSerializer):
     class Meta:
         model = Bulletin
-        fields = '__all__'
+        fields = ['title', 'content', 'image']
+        read_only_fields = ['author']
+
 
 class BulletinDetailSerializer(BulletinSerializer):
     liked = serializers.SerializerMethodField()
@@ -114,10 +135,37 @@ class BulletinDetailSerializer(BulletinSerializer):
     def get_liked(self, bulletin):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return bulletin.like_set.filter(tai_khoan=request.user, active=True).exists()
+            return bulletin.like_set.filter(user=request.user, is_active=True).exists()
 
     class Meta:
         model = BulletinSerializer.Meta.model
         fields = list(BulletinSerializer.Meta.fields) + ['liked']
 
+    # def save(self, **kwargs):
+    #     author = self.context["request"].user
+    #     return super().save(**kwargs)
+class StatutePointsSerializer(serializers.Serializer):
+    statute = serializers.IntegerField()
+    total_points = serializers.IntegerField()
 
+    class Meta:
+        fields = ['statute', 'total_points']
+
+class SemesterStatutePointsSerializer(serializers.Serializer):
+    semester_name = serializers.CharField()
+    points_by_statute = StatutePointsSerializer(many=True)
+
+    class Meta:
+        fields = ['semester_name', 'points_by_statute']
+
+class MissingActivityReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MissingActivityReport
+        fields = ['student_activity', 'reason', 'proof', 'status']
+        read_only_fields = ['status']
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['proof'] = instance.proof.url
+
+        return rep

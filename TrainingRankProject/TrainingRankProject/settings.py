@@ -20,8 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-aovf3vbd&x%-8u(3t^!yy-!h)p5!&h*xv9r86*=8arlr868bm5'
-CLIENT_ID = 'KfljafBKq5qXILsuNPjnF2f6eaLCsqEBSKkuMctE'
-CLIENT_SECRET = 'P1qpLWLxs2hDZQkkAnUDrf1JoJLvgvd43SORRlmI0etqP95Gvaqwp6kghZBWWCuvI4O6DqiGQ4LTlsA2sZjNMUh8AoPNaaO7sdM0zC8FY9YLoAWHojprL9HUqQf8ZPaG'
+CLIENT_ID = '5XCs0SJURt6t4QD6dap5i5hPSNN4X8USn5B56MtS'
+CLIENT_SECRET = 'm6Mzj9EYlQ3kmhPz6O4k7Z6HAw1xRaROD4bWcsS8fgqhiOswQi7qi6fWDBnK6ZnfvjfQ1l6BN0uv0kcFoiNS0v86c2txxrMUkPXmuRHXSXPamwjZcTA9J0Tqix1iOEEy'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -42,19 +42,19 @@ INSTALLED_APPS = [
     'ckeditor_uploader',
     'oauth2_provider',
     'drf_yasg',
+    'corsheaders'
 ]
 
 import cloudinary
 
 cloudinary.config(
-  cloud_name="dmfr3gngl",
-  api_key="119749293867732",
-  api_secret="R42-4n6WSoV-ChzSKYws7Nqy0g4",
-  secure=True
+    cloud_name="dmfr3gngl",
+    api_key="119749293867732",
+    api_secret="R42-4n6WSoV-ChzSKYws7Nqy0g4",
+    secure=True
 )
 
 AUTH_USER_MODEL = 'TrainingAPIApp.User'
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -64,7 +64,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'TrainingRankProject.urls'
 
@@ -105,6 +108,8 @@ DATABASES = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication'
     )
 }
 
