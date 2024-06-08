@@ -93,7 +93,7 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
                       generics.RetrieveAPIView):
     queryset = Activity.objects.all()
     serializer_class = ActivitySerializer
-    pagination_class = ActivityPaginator
+    # pagination_class = ActivityPaginator
 
     def perform_create(self, serializer):
         serializer.save(assistant_creator=self.request.user)

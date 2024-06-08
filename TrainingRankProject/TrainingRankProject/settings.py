@@ -25,7 +25,7 @@ CLIENT_SECRET = 'm6Mzj9EYlQ3kmhPz6O4k7Z6HAw1xRaROD4bWcsS8fgqhiOswQi7qi6fWDBnK6Zn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.30']
 
 # Application definition
 
@@ -68,7 +68,6 @@ MIDDLEWARE = [
 
 ]
 CORS_ALLOW_ALL_ORIGINS = True
-
 ROOT_URLCONF = 'TrainingRankProject.urls'
 
 TEMPLATES = [
