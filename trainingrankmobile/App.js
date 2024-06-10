@@ -1,20 +1,7 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
-import EventList from './src/components/home/ActivityList.js';
+import { LogBox } from 'react-native';
+import Provider from './src/routers/Provider';
+LogBox.ignoreAllLogs();
 
-const App = () => {
-    return (
-        <SafeAreaView style={styles.container}>
-            <EventList />
-        </SafeAreaView>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-});
-
-export default App;
+export default function App() {
+   return <Provider />;
+}

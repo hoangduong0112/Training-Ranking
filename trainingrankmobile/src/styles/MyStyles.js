@@ -1,9 +1,9 @@
-import { Dimensions, StyleSheet } from 'react-native';
-import Theme from './Theme';
+import { Dimensions, StyleSheet } from "react-native";
+import Theme from "./MyTheme";
+
 
 export const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-const GlobalStyle = StyleSheet.create({
+const MyStyles = StyleSheet.create({
     Container: {
         flex: 1,
         alignItems: 'center',
@@ -64,4 +64,4 @@ const GlobalStyle = StyleSheet.create({
     },
 });
 
-export default GlobalStyle;
+export default MyStyles;

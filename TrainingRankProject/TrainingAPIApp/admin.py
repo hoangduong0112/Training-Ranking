@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group
+
 from .models import Klass, Department, Semester, Statute, Activity, StudentActivity, User, Student, Bulletin, \
     MissingActivityReport, Like, Comment
 
@@ -11,7 +13,7 @@ class TrainingPointManagerAdminSite(admin.AdminSite):
 
 
 admin_site = TrainingPointManagerAdminSite(name='ranking-app')
-
+admin_site.register(Group)
 admin_site.register(Department, DepartmentAdmin)
 admin_site.register(Klass)
 admin_site.register(Semester)

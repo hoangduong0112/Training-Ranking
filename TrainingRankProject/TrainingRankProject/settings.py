@@ -25,7 +25,7 @@ CLIENT_SECRET = 'm6Mzj9EYlQ3kmhPz6O4k7Z6HAw1xRaROD4bWcsS8fgqhiOswQi7qi6fWDBnK6Zn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.30']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -107,11 +107,13 @@ DATABASES = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication'
     )
 }
-
+#JSon body input
+# OAUTH2_PROVIDER = {
+#     # parses OAuth2 data from application/json requests
+#     'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore',
+# }
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 

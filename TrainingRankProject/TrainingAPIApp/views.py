@@ -52,6 +52,11 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
         serializer = ActivitySerializer(activities, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
+    @action(methods=['get'], url_path="current-user", detail=False)
+    def get_current(self, request):
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+
+
 class BulletinViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                       generics.RetrieveAPIView):
     queryset = Bulletin.objects.all()
@@ -177,6 +182,8 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
             return Response({'status': 'Attendance updated successfully'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+    #tao 1 report missing
     @action(methods=["post"], detail=True, url_path="report")
     def report_missing_activity(self, request, pk):
         activity = self.get_object()
@@ -201,3 +208,10 @@ class MissingActivityReportViewSet(viewsets.ViewSet, generics.ListAPIView, gener
     queryset = MissingActivityReport.objects.filter(is_active=True)
     serializer_class = MissingActivityReportSerializer
 
+    # @action(methods=["post"], detail=True, url_path="accept")
+    # def acceptsReport(self, request, pk):
+    #     report = self.get_object()
+    #     if report.status != 'pending':
+    #         return Response(data={"detail": "Báo thiếu đã được giải quyết"}, status=status.HTTP_400_BAD_REQUEST)
+    #     else:
+    #         report

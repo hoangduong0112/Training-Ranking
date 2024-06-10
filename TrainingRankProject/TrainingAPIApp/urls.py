@@ -6,12 +6,12 @@ from TrainingAPIApp import views
 
 r = routers.DefaultRouter()
 
-r.register('department', views.DepartmentViewSet)
-r.register('class', views.KlassViewSet)
-r.register('user', views.UserViewSet, basename='user')
-r.register('bulletin', views.BulletinViewSet)
-r.register('activity', views.ActivityViewSet)
-r.register('report', views.MissingActivityReportViewSet)
+r.register('departments', views.DepartmentViewSet)
+r.register('classes', views.KlassViewSet)
+r.register('users', views.UserViewSet, basename='user')
+r.register('bulletins', views.BulletinViewSet)
+r.register('activities', views.ActivityViewSet)
+r.register('reports', views.MissingActivityReportViewSet)
 
 urlpatterns = [
     path('', include(r.urls))
