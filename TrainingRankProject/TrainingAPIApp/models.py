@@ -100,13 +100,18 @@ class User(AbstractUser):
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
-    student_code = models.CharField(max_length=10, null=True, blank=True, unique=True, db_index=True, editable=False)
+    student_code = models.CharField(max_length=10, unique=True, db_index=True)
     phone = models.CharField(max_length=255)
     student_class = models.ForeignKey(Klass, on_delete=models.CASCADE, related_name='students')
     student_department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='students')
 
     def __str__(self):
         return self.student_code
+
+    @property
+    def full_name(self):
+        return f"{self.user.first_name} {self.user.last_name}"
+
 
 class Activity(BaseModel):
     title = models.CharField(max_length=100)
@@ -127,10 +132,13 @@ class StudentActivity(BaseModel):
         ('attended', 'Đã tham gia'),
         ('missing_reported', 'Báo thiếu')
     )
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='student_activities')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='student_activities')
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='student_activities')
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='student_activities')
     status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='registered')
+
+    class Meta:
+        unique_together = ('user', 'activity')
 
 class MissingActivityReport(BaseModel):
     student_activity = models.ForeignKey(StudentActivity, on_delete=models.CASCADE, related_name='missing_reports')
@@ -148,7 +156,7 @@ class Bulletin(BaseModel):
     content = models.TextField()
     image = CloudinaryField(null=True, blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bulletins')
-
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='hosted_activity')
     def __str__(self):
         return self.title
 

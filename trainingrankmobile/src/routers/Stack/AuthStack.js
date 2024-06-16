@@ -1,10 +1,10 @@
 
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import { useEffect, useState } from 'react';
 // import SignUp from '../../screens/auth/SignUp';
 import SignIn from '../../screens/auth/SignIn';
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 const AuthStack = () => {
 

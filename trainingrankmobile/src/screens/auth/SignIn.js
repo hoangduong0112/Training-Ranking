@@ -61,7 +61,7 @@ const SignIn = ({ navigation }) => {
             if (user.status === statusCode.HTTP_200_OK) dispatch(SignInAction(user.data));
          }, 100);
       } catch (error) {
-         if (error.response && error.response.status === statusCode.HTTP_400_BAD_REQUEST) {
+         if (error.response) {
             console.log(error.response)
             setErrorVisible(true);
             setErrorMessage('Email hoặc mật khẩu không chính xác');

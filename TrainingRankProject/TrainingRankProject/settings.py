@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,8 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-aovf3vbd&x%-8u(3t^!yy-!h)p5!&h*xv9r86*=8arlr868bm5'
-CLIENT_ID = '5XCs0SJURt6t4QD6dap5i5hPSNN4X8USn5B56MtS'
-CLIENT_SECRET = 'm6Mzj9EYlQ3kmhPz6O4k7Z6HAw1xRaROD4bWcsS8fgqhiOswQi7qi6fWDBnK6ZnfvjfQ1l6BN0uv0kcFoiNS0v86c2txxrMUkPXmuRHXSXPamwjZcTA9J0Tqix1iOEEy'
+CLIENT_ID = 'dnZ9K9kYGMSCWyVpNn3AHpbGuOFBDdGVBKUzBYtd'
+CLIENT_SECRET = 'PDEWNToj7UsGqr64mt29K5PJ8eMTu4lcQpeOxo1ATOHP1zofHUU2drYNMN3s0Ee2WFvxdFHEtTHs7bfr51Rh8lnmD5sgj539YRQLttB8rNPM4HRwzejCvVXEbbZbjLmk'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -30,13 +30,13 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'TrainingAPIApp.apps.TrainingapiappConfig',
+    'django.contrib.admin',
     'rest_framework',
     'ckeditor',
     'ckeditor_uploader',
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'corsheaders'
 ]
-
+# INSTALLED_APPS = ['app1'] + INSTALLED_APPS
 import cloudinary
 
 cloudinary.config(
@@ -73,7 +73,7 @@ ROOT_URLCONF = 'TrainingRankProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -145,8 +145,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

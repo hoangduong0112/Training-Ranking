@@ -1,7 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Icon } from 'react-native-paper';
 import Theme from '../styles/MyTheme';
-import Activity from '../screens/home/Activity'
+import ActivityListScreen from '../screens/activities/ActivityListScreen';
+import BulletinListScreen from '../screens/bulletins/BulletinListScreen';
 const Tab = createBottomTabNavigator();
 
 const BottomTab = () => {
@@ -25,6 +26,8 @@ const BottomTab = () => {
                   case 'Profile':
                      iconName = focused ? 'account' : 'account-outline';
                      break;
+                  case 'Forum':
+                     iconName = focused ? 'forum' : 'forum-outline'
                   default:
                      iconName = '';
                }
@@ -35,8 +38,9 @@ const BottomTab = () => {
             },
          })}
       >
-         <Tab.Screen name="Home" component={Activity} options={{ tabBarLabel: 'Trang chủ' }}></Tab.Screen>
-        
+         <Tab.Screen name="Home" component={ActivityListScreen} options={{ tabBarLabel: 'Hoạt động' }}></Tab.Screen>
+         
+         <Tab.Screen name="Bulletin" component={BulletinListScreen} options={{ tabBarLabel: 'Diễn đàn' }}></Tab.Screen>
       </Tab.Navigator>
    );
 };

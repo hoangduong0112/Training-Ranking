@@ -1,15 +1,35 @@
+// src/routers/Provider.js
+import React, { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { DefaultTheme, Provider as PaperProvider } from 'react-native-paper';
 import Theme from '../styles/MyTheme';
 import Routers from './Routers';
 import { UserProvider } from './../stores/contexts/UserContext';
 import { GlobalProvider } from './../stores/contexts/GlobalContext';
 
+const removeTokens = async () => {
+    try {
+        await AsyncStorage.multiRemove(['access-token', 'refresh-token']);
+        console.log('Tokens removed');
+    } catch (e) {
+        console.error('Failed to remove tokens', e);
+    }
+};
+
 const Provider = () => {
     useEffect(() => {
-        AsyncStorage.getAllKeys().then((key) => console.log(key));
-        // AsyncStorage.clear().then(() => console.log('Cleared'));
+        const handleAppStateChange = async (nextAppState) => {
+            if (nextAppState === 'background') {
+                await removeTokens();
+            }
+        };
+
+        AppState.addEventListener('change', handleAppStateChange);
+
+        return () => {
+            AppState.removeEventListener('change', handleAppStateChange);
+        };
     }, []);
 
     return (

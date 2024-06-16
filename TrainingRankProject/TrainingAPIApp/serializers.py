@@ -9,10 +9,13 @@ from .validators import *
 # Image serializer
 class ImageSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        rep['image'] = instance.image.url
+        data = super().to_representation(instance)
+        image = data.get("image")
 
-        return rep
+        if "image" in self.fields and image:
+            data["image"] = instance.image.url
+
+        return data
 
 
 class KlassSerializer(serializers.ModelSerializer):
@@ -24,7 +27,7 @@ class KlassSerializer(serializers.ModelSerializer):
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
-        fields = ['id','department_name']
+        fields = ['id', 'department_name']
 
 
 class SemesterSerializer(serializers.ModelSerializer):
@@ -58,14 +61,18 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'avatar', 'user_role']
+        fields = ['email', 'password', 'avatar', 'user_role', 'first_name', 'last_name']
         extra_kwargs = {'password': {'write_only': True}}
 
     # def validate_user_role(self, value):
     #     if value == 'ADMIN':
     #         raise serializers.ValidationError("You cannot set the role to 'admin'.")
     #     return value
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['avatar'] = instance.avatar.url
 
+        return rep
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
@@ -75,17 +82,25 @@ class UserSerializer(serializers.ModelSerializer):
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
-        fields = ['id', 'title', 'date_register', 'location', 'description', 'points', 'statute', 'assistant_creator']
+        fields = ['id', 'title', 'date_register', 'location', 'description', 'points', 'assistant_creator']
         read_only_fields = ['assistant_creator']
         date_register = serializers.DateTimeField(format='%Y-%m-%d %H:%M', input_formats=['%Y-%m-%d %H:%M'])
 
-    # def create(self, validated_data):
-    #     request = self.context.get("request")
-    #     validated_data['assistant_creator'] = request.user
-    #     activity = Activity.objects.create(**validated_data)
-    #     activity.save()
-    #
-    #     return activity
+class AuthenticatedDetailActivitySerializer(ActivitySerializer):
+    status = serializers.SerializerMethodField()
+
+    def get_status(self, activity):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            student_activity = activity.student_activities.filter(user=request.user).first()
+            if student_activity:
+                return student_activity.status
+
+        return None
+
+    class Meta:
+        model = Activity
+        fields = ['id', 'title', 'date_register', 'location', 'description', 'points', 'statute', 'status', 'assistant_creator']
 
 
 class StudentActivitySerializer(serializers.ModelSerializer):
@@ -105,9 +120,6 @@ class StudentActivityDetailSerializer(serializers.ModelSerializer):
         model = StudentActivity
         fields = ['activity', 'status']
 
-class CSVUploadSerializer(serializers.Serializer):
-    file = serializers.FileField()
-
 
 # interaction
 class LikeSerializer(serializers.ModelSerializer):
@@ -121,21 +133,20 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = '__all__'
 
-
 class BulletinSerializer(ImageSerializer):
     class Meta:
         model = Bulletin
-        fields = ['title', 'content', 'image']
+        fields = ['id', 'title', 'content', 'image', 'author', 'activity', 'is_active', 'created_date', 'updated_date']
         read_only_fields = ['author']
 
 
-class BulletinDetailSerializer(BulletinSerializer):
+class AuthenticatedBulletinSerializer(BulletinSerializer):
     liked = serializers.SerializerMethodField()
 
     def get_liked(self, bulletin):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return bulletin.like_set.filter(user=request.user, is_active=True).exists()
+            return bulletin.like_interactions.filter(user=request.user, is_active=True).exists()
 
     class Meta:
         model = BulletinSerializer.Meta.model
@@ -144,6 +155,16 @@ class BulletinDetailSerializer(BulletinSerializer):
     # def save(self, **kwargs):
     #     author = self.context["request"].user
     #     return super().save(**kwargs)
+
+class StatuteSerialier(serializers.ModelSerializer):
+    class Meta:
+        model = Statute
+        fields = ['id', 'statute_name', 'max_point', 'description']
+
+class SemesterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Semester
+        fields = '__all__'
 class StatutePointsSerializer(serializers.Serializer):
     statute = serializers.IntegerField()
     total_points = serializers.IntegerField()

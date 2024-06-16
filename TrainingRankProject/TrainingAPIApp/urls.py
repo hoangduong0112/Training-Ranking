@@ -12,6 +12,8 @@ r.register('users', views.UserViewSet, basename='user')
 r.register('bulletins', views.BulletinViewSet)
 r.register('activities', views.ActivityViewSet)
 r.register('reports', views.MissingActivityReportViewSet)
+r.register('statute', views.StatuteViewSet)
+r.register('semester', views.SemesterViewSet)
 
 urlpatterns = [
     path('', include(r.urls))

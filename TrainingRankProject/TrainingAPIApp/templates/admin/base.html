@@ -1,0 +1,8 @@
+{% extends 'admin/base.html' %}
+{% load i18n static %}
+
+{% block userlinks %}
+    <a href="{% url 'admin:get_points_by_semester' %}">Điểm sinh viên</a> /
+    <a href="{% url 'admin:get_points_by_department' %}" >Thành tích khoa</a> /
+    {{ block.super }}
+{% endblock %}

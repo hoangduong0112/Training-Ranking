@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer } from 'react';
-import { authAPI, endPoints } from '../../configs/APIs';
+import { authAPI, endpoints } from '../../configs/APIs';
 import { statusCode } from '../../configs/Constants';
 import { getTokens, refreshAccessToken } from '../../utils/utils';
 import { SignInAction, SignOutAction } from '../actions/UserAction';
@@ -26,7 +26,7 @@ export const UserProvider = ({ children }) => {
       }
 
       try {
-         const user = await authAPI(accessToken).get(endPoints['me']);
+         const user = await authAPI(accessToken).get(endpoints['me']);
          dispatch(SignInAction(user.data));
       } catch (error) {
          if (error.response) {
