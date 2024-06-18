@@ -40,16 +40,16 @@ export const endpoints = {
 
     //statute
     statute: '/statute/',
+    'statute-detail': (statute_id) => `/statute/${statute_id}/`,
 
     //user
     users: '/users/',
     'user-details': (userID) => `/users/${userID}/`,
     me: 'users/current-user/',
-    'user-my-activities': '/users/my-activities/', 
-    'user-my-total-points': '/users/my-total-points/',
     'user-profile': '/users/profile/',
     'user-activities': (userID) => `/users/${userID}/activities/`,
-    'user-total-points': (userID) => `/users/${userID}/total-points`
+    'user-total-points': (userID) => `/users/${userID}/total-points/`,
+    'user-created-activities': '/users/created-activities/',
 }
 
 export const authAPI = (token) => {
@@ -57,6 +57,7 @@ export const authAPI = (token) => {
        baseURL: BASE_URL,
        headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
        },
     });
  };

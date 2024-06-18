@@ -1,20 +1,21 @@
-// screens/BulletinListScreen.js
-import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, FlatList, StyleSheet, Text, RefreshControl } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { authAPI, endpoints } from '../../configs/APIs';
 import Loading from '../../components/common/Loading';
+import BulletinCard from '../../components/bulletin/BulletinCard';
+import { useUser } from '../../stores/contexts/UserContext';
 import { getTokens } from '../../utils/utils';
-import BulletinCard from './../../components/bulletin/BulletinCard';
+import CustomButton from './../../components/common/CustomButton';
 
 const BulletinListScreen = () => {
+  const navigation = useNavigation();
+  const { data: userData } = useUser();
+
   const [bulletins, setBulletins] = useState([]);
-  const [selectedBulletin, setSelectedBulletin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [nextPage, setNextPage] = useState(null);
-
-  useEffect(() => {
-    fetchBulletins();
-  }, []);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchBulletins = async () => {
     try {
@@ -30,14 +31,21 @@ const BulletinListScreen = () => {
     }
   };
 
-  const handleViewDetails = async (bulletinID) => {
-    try {
-      const { accessToken } = await getTokens();
-      const response = await authAPI(accessToken).get(endpoints['bulletins-detail'](bulletinID));
-      setSelectedBulletin(response.data);
-    } catch (error) {
-      console.error(error);
-    }
+  useEffect(() => {
+    fetchBulletins();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchBulletins();
+    }, [])
+  );
+
+  const handleViewDetails = (bulletinID) => {
+    navigation.navigate('BulletinStack', {
+      screen: 'BulletinDetailScreen',
+      params: { bulletinID },
+    });
   };
 
   const handleLoadMore = () => {
@@ -51,7 +59,7 @@ const BulletinListScreen = () => {
       const { accessToken } = await getTokens();
       const response = await authAPI(accessToken).get(pageUrl);
 
-      setBulletins(prevBulletins => [...prevBulletins, ...response.data.results]);
+      setBulletins((prevBulletins) => [...prevBulletins, ...response.data.results]);
       setNextPage(response.data.next);
     } catch (error) {
       console.error(error);
@@ -61,6 +69,17 @@ const BulletinListScreen = () => {
   const renderBulletinItem = ({ item }) => (
     <BulletinCard bulletin={item} onPress={() => handleViewDetails(item.id)} />
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchBulletins();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading && bulletins.length === 0) {
     return (
@@ -72,31 +91,35 @@ const BulletinListScreen = () => {
 
   return (
     <View style={styles.container}>
-      {selectedBulletin ? (
-        <View style={styles.bulletinDetailContainer}>
-          <Text style={styles.title}>{selectedBulletin.title}</Text>
-          <Text style={styles.content}>{selectedBulletin.content}</Text>
-          <Text style={styles.date}>Created Date: {selectedBulletin.created_date}</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedBulletin(null)}>
-            <Text style={styles.backButtonText}>Back to Bulletins</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={bulletins}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderBulletinItem}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={() => (
-            nextPage ? (
-              <View style={styles.loadMoreContainer}>
-                <Text style={styles.loadMoreText}>Loading more...</Text>
-              </View>
-            ) : null
-          )}
+      {userData && (userData.user_role === 'TLSV' || userData.user_role === 'CV') && (
+        <CustomButton
+          title="Tạo Bulletin"
+          onPress={() =>
+            navigation.navigate('BulletinStack', {
+              screen: 'CreateBulletinScreen',
+            })
+          }
+          color="#007bff"
+          textColor="#fff"
+          style={styles.createButton}
         />
       )}
+
+      <FlatList
+        data={bulletins}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderBulletinItem}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        ListFooterComponent={() =>
+          nextPage ? (
+            <View style={styles.loadMoreContainer}>
+              <Text style={styles.loadMoreText}>Loading more...</Text>
+            </View>
+          ) : null
+        }
+      />
     </View>
   );
 };
@@ -112,34 +135,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  bulletinDetailContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  content: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  date: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  backButton: {
-    marginTop: 16,
-    padding: 8,
-    backgroundColor: '#ccc',
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  backButtonText: {
-    fontSize: 16,
-  },
   loadMoreContainer: {
     paddingVertical: 16,
     alignItems: 'center',
@@ -147,6 +142,9 @@ const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 16,
     color: '#666',
+  },
+  createButton: {
+    marginTop: 16,
   },
 });
 

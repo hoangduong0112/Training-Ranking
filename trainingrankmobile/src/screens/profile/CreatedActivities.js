@@ -7,25 +7,24 @@ import { getTokens } from '../../utils/utils';
 import { useUser } from '../../stores/contexts/UserContext';
 import ActivityDetails from '../../components/activity/ActivityDetails';
 
-const ActivityListScreen = () => {
+const CreatedActivitiesScreen = () => {
   const [activities, setActivities] = useState([]);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [nextPage, setNextPage] = useState(null);
-  const [refreshing, setRefreshing] = useState(false); // State for RefreshControl
+  const [refreshing, setRefreshing] = useState(false);
   const { data: userData } = useUser();
   const navigation = useNavigation();
 
   useFocusEffect(
     useCallback(() => {
-      fetchActivities();
+      fetchCreatedActivities();
 
       const onBackPress = () => {
         if (selectedActivity) {
           setSelectedActivity(null);
-          return true; // Prevent default behavior (navigating back)
+          return true;
         }
-        return false; // Default behavior
+        return false;
       };
 
       BackHandler.addEventListener('hardwareBackPress', onBackPress);
@@ -34,15 +33,14 @@ const ActivityListScreen = () => {
     }, [selectedActivity])
   );
 
-  const fetchActivities = async () => {
+  const fetchCreatedActivities = async () => {
     try {
       const { accessToken } = await getTokens();
-      const response = await authAPI(accessToken).get(endpoints['activities']);
-      setActivities(response.data.results.map(activity => ({
+      const response = await authAPI(accessToken).get(endpoints['user-created-activities']);
+      setActivities(response.data.map(activity => ({
         ...activity,
         isExpired: isActivityExpired(activity.date_register),
       })));
-      setNextPage(response.data.next);
     } catch (error) {
       console.error(error);
     } finally {
@@ -63,29 +61,6 @@ const ActivityListScreen = () => {
     }
   };
 
-  const handleLoadMore = () => {
-    if (nextPage) {
-      fetchNextPage(nextPage);
-    }
-  };
-
-  const fetchNextPage = async (pageUrl) => {
-    try {
-      const { accessToken } = await getTokens();
-      const response = await authAPI(accessToken).get(pageUrl);
-      setActivities(prevActivities => [
-        ...prevActivities,
-        ...response.data.results.map(activity => ({
-          ...activity,
-          isExpired: isActivityExpired(activity.date_register),
-        })),
-      ]);
-      setNextPage(response.data.next);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const isActivityExpired = (activityDate) => {
     const currentDate = new Date();
     const activityEndDate = new Date(activityDate);
@@ -100,13 +75,13 @@ const ActivityListScreen = () => {
   );
 
   const handleRefresh = async () => {
-    setRefreshing(true); // Set refreshing to true to show the RefreshControl
+    setRefreshing(true);
     try {
-      await fetchActivities(); // Fetch fresh activities
+      await fetchCreatedActivities();
     } catch (error) {
       console.error(error);
     } finally {
-      setRefreshing(false); // Set refreshing to false when done
+      setRefreshing(false);
     }
   };
 
@@ -127,21 +102,12 @@ const ActivityListScreen = () => {
           data={activities}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderActivityItem}
-          onEndReached={handleLoadMore}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
             />
           }
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={() => (
-            nextPage ? (
-              <View style={styles.loadMoreContainer}>
-                <Text style={styles.loadMoreText}>Loading more...</Text>
-              </View>
-            ) : null
-          )}
         />
       )}
     </View>
@@ -168,13 +134,6 @@ const styles = StyleSheet.create({
   expiredText: {
     color: 'red',
   },
-  loadMoreContainer: {
-    paddingVertical: 16,
-  },
-  loadMoreText: {
-    textAlign: 'center',
-    color: '#007BFF',
-  },
 });
 
-export default ActivityListScreen;
+export default CreatedActivitiesScreen;

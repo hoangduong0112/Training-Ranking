@@ -77,7 +77,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
     @action(methods=["get"], detail=True, url_path="activities")
     def get_activities(self, request, pk=None):
         user = self.get_object()
-        registrations = StudentActivity.objects.select_related("activity").filter(student=user, is_active=True)
+        registrations = StudentActivity.objects.select_related("activity").order_by('-id').filter(user=user, is_active=True)
 
         activities = [registration.activity for registration in registrations]
 
@@ -95,41 +95,6 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
     def get_current(self, request):
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='my-activities')
-    def my_activities(self, request):
-        user = request.user
-        status_param = request.query_params.get('status', None)
-
-        student_activities = StudentActivity.objects.filter(student=user)
-        if status_param:
-            student_activities = student_activities.filter(status=status_param)
-
-        serializer = StudentActivityDetailSerializer(student_activities, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['get'], url_path='my-total-points')
-    def my_total_points_by_semester(self, request):
-        user = request.user
-        attended_activities = StudentActivity.objects.filter(student=user, status='attended')
-        total_points_by_semester = attended_activities.values('semester__semester_name', 'activity__statute').annotate(
-            total_points=Sum('activity__points')).order_by('semester__semester_name', 'activity__statute')
-
-        result = {}
-        for entry in total_points_by_semester:
-            semester_name = entry['semester__semester_name']
-            statute_id = entry['activity__statute']
-            total_points = entry['total_points']
-            if semester_name not in result:
-                result[semester_name] = []
-            result[semester_name].append({
-                'statute': statute_id,
-                'total_points': total_points
-            })
-
-        formatted_result = [{'semester_name': semester, 'points_by_statute': points} for semester, points in
-                            result.items()]
-        serializer = SemesterStatutePointsSerializer(formatted_result, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='points')
     def points_activity(self, request, pk):
@@ -155,11 +120,16 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
         serializer = SemesterStatutePointsSerializer(formatted_result, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'],url_path='created-activities')
+    def get_created_activities(self, request):
+        activities = Activity.objects.filter(assistant_creator=self.request.user)
+        return Response(ActivitySerializer(activities, many=True).data, status=status.HTTP_200_OK)
+
 
 # Bai viet cua dien dan
 class BulletinViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                       generics.RetrieveAPIView):
-    queryset = Bulletin.objects.filter(is_active=True).order_by('created_date')
+    queryset = Bulletin.objects.order_by('-created_date').select_related('author').all()
     serializer_class = BulletinSerializer
     pagination_class = paginators.BulletinPaginator
 
@@ -218,7 +188,7 @@ class BulletinViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
             status=status.HTTP_201_CREATED)
 
 
-class StatuteViewSet(viewsets.ViewSet, generics.ListAPIView):
+class StatuteViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Statute.objects.filter(is_active=True)
     serializer_class = StatuteSerialier
     permission_classes = [IsAuthenticated]
@@ -239,7 +209,7 @@ class SemesterViewSet(viewsets.ViewSet, generics.ListAPIView):
 
 class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                       generics.RetrieveAPIView):
-    queryset = Activity.objects.select_related('statute','assistant_creator').filter(is_active=True)
+    queryset = Activity.objects.select_related('statute','assistant_creator').order_by('-date_register', '-created_date').all()
     serializer_class = ActivitySerializer
     pagination_class = ActivityPaginator
     
@@ -267,8 +237,13 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
     @action(methods=['post'], detail=True, url_path='register')
     def register(self, request, pk):
         semester = Semester.objects.filter(is_finished=False).first()
+        try:
+            activity = Activity.objects.get(pk=self.kwargs['pk'])
+        except Activity.DoesNotExist:
+            return Response({'error': 'Activity not found'}, status=status.HTTP_404_NOT_FOUND)
+
         registration, created = self.get_object().student_activities.get_or_create(user=request.user,
-                                                                                   semester=semester)
+                                                                                   semester=semester,activity=activity)
         if not created:
             registration.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -329,7 +304,7 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
                             status=status.HTTP_400_BAD_REQUEST)
 
         if request.method == 'GET':
-            report = MissingActivityReport.objects.get(student_activity=student_activity)
+            report = MissingActivityReport.objects.get(student_activity=student_activity).all()
             return Response(MissingActivityReportSerializer(report).data, status=status.HTTP_200_OK)
         elif request.method == 'POST':
             if MissingActivityReport.objects.filter(student_activity=student_activity).exists():
@@ -346,7 +321,7 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
 
 class MissingActivityReportViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView,
                                    generics.RetrieveAPIView):
-    queryset = MissingActivityReport.objects.filter(is_active=True)
+    queryset = MissingActivityReport.objects.all()
     serializer_class = MissingActivityReportSerializer
 
     def get_permissions(self):

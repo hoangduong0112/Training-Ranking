@@ -75,7 +75,7 @@ const SignIn = ({ navigation }) => {
       <ScrollView style={MyStyles.BackGround}>
          <DismissKeyboard>
             <LinearGradient colors={Theme.LinearColors2}>
-               <AuthHeader title="Đăng nhập" content="Đăng nhập để sử dụng hệ thống điểm rèn luyện sinh viên" />
+               <AuthHeader title="Đăng nhập" content="Hệ thống điểm rèn luyện sinh viên" />
                <AuthForm
                   navigation={navigation}
                   fields={signInFields}

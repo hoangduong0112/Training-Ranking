@@ -1,4 +1,4 @@
-// src/components/activity/ActivityCard.js
+
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
@@ -6,8 +6,8 @@ const ActivityCard = ({ instance, onPress }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View>
-        <Text style={styles.title}>{instance.title}</Text>
-        <Text>{instance.description}</Text>
+        <Text style={styles.title}>Tên hoạt động: {instance.title}</Text>
+        <Text>Mô tả: {instance.description}</Text>
       </View>
       <Text style={styles.detailsButton}>View Details</Text>
     </TouchableOpacity>

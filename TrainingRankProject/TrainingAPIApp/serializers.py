@@ -33,13 +33,13 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
-        field = ['id', 'semester_name', 'description', 'is_finished']
+        fields = ['id', 'semester_name', 'description', 'is_finished']
 
 
 class StatuteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Statute
-        field = ['id', 'statute_name', 'max_point', 'description']
+        fields = '__all__'
 
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -61,7 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'avatar', 'user_role', 'first_name', 'last_name']
+        fields = ['id', 'email', 'password', 'avatar', 'user_role', 'first_name', 'last_name']
         extra_kwargs = {'password': {'write_only': True}}
 
     # def validate_user_role(self, value):
@@ -77,14 +77,17 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-
-
 class ActivitySerializer(serializers.ModelSerializer):
+    assistant_creator = UserSerializer(read_only=True)
+
     class Meta:
         model = Activity
-        fields = ['id', 'title', 'date_register', 'location', 'description', 'points', 'assistant_creator']
+        fields = ['id', 'title', 'date_register', 'location', 'description', 'points', 'statute',
+                  'assistant_creator']
         read_only_fields = ['assistant_creator']
         date_register = serializers.DateTimeField(format='%Y-%m-%d %H:%M', input_formats=['%Y-%m-%d %H:%M'])
+
+
 
 class AuthenticatedDetailActivitySerializer(ActivitySerializer):
     status = serializers.SerializerMethodField()
@@ -106,7 +109,7 @@ class AuthenticatedDetailActivitySerializer(ActivitySerializer):
 class StudentActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentActivity
-        fields = ['student', 'activity', 'semester', 'status']
+        fields = ['user', 'activity', 'semester', 'status']
         read_only_fields = ['status']
 
     def create(self, validated_data):
@@ -129,14 +132,16 @@ class LikeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
     class Meta:
         model = Comment
         fields = '__all__'
 
 class BulletinSerializer(ImageSerializer):
+    author = UserSerializer(read_only=True)
     class Meta:
         model = Bulletin
-        fields = ['id', 'title', 'content', 'image', 'author', 'activity', 'is_active', 'created_date', 'updated_date']
+        fields = ['id', 'title', 'content', 'image', 'activity', 'is_active', 'created_date', 'updated_date', 'author']
         read_only_fields = ['author']
 
 
