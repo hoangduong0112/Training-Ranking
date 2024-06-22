@@ -3,15 +3,12 @@ import MyStyles from '../../styles/MyStyles';
 import Theme from '../../styles/MyTheme';
 
 const AuthFooter = ({ navigation, content, screen, linkText }) => {
-   const handleNavigate = () => {
-      if (screen === 'SignIn') navigation.goBack();
-      else navigation.navigate(screen);
-   };
 
    return (
       <View style={FooterStyle.FooterContainer}>
-         <Text style={MyStyles.Bold}>{content}</Text>
-         <TouchableOpacity onPress={handleNavigate}>
+         <Text style={MyStyles.Bold}>{content}</Text>       
+           <TouchableOpacity onPress={() => navigation.navigate(screen)}>
+
             <Text style={FooterStyle.FooterText}>{linkText}</Text>
          </TouchableOpacity>
       </View>

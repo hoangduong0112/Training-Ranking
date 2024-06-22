@@ -48,7 +48,7 @@ export const endpoints = {
     me: 'users/current-user/',
     'user-profile': '/users/profile/',
     'user-activities': (userID) => `/users/${userID}/activities/`,
-    'user-total-points': (userID) => `/users/${userID}/total-points/`,
+    'user-points': (userID) => `/users/${userID}/points/`,
     'user-created-activities': '/users/created-activities/',
 }
 

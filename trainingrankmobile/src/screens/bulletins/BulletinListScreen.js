@@ -7,7 +7,7 @@ import BulletinCard from '../../components/bulletin/BulletinCard';
 import { useUser } from '../../stores/contexts/UserContext';
 import { getTokens } from '../../utils/utils';
 import CustomButton from './../../components/common/CustomButton';
-
+import moment from 'moment/moment';
 const BulletinListScreen = () => {
   const navigation = useNavigation();
   const { data: userData } = useUser();

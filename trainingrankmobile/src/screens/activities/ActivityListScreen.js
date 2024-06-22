@@ -5,11 +5,9 @@ import { authAPI, endpoints } from '../../configs/APIs';
 import Loading from '../../components/common/Loading';
 import { getTokens } from '../../utils/utils';
 import { useUser } from '../../stores/contexts/UserContext';
-import ActivityDetails from '../../components/activity/ActivityDetails';
 
 const ActivityListScreen = () => {
   const [activities, setActivities] = useState([]);
-  const [selectedActivity, setSelectedActivity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [nextPage, setNextPage] = useState(null);
   const [refreshing, setRefreshing] = useState(false); // State for RefreshControl
@@ -20,18 +18,12 @@ const ActivityListScreen = () => {
     useCallback(() => {
       fetchActivities();
 
-      const onBackPress = () => {
-        if (selectedActivity) {
-          setSelectedActivity(null);
-          return true; // Prevent default behavior (navigating back)
-        }
-        return false; // Default behavior
-      };
+      const onBackPress = () => false; // Prevent default behavior (navigating back)
 
       BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
       return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-    }, [selectedActivity])
+    }, [])
   );
 
   const fetchActivities = async () => {
@@ -50,17 +42,8 @@ const ActivityListScreen = () => {
     }
   };
 
-  const handleViewDetails = async (activityID) => {
-    try {
-      const { accessToken } = await getTokens();
-      const response = await authAPI(accessToken).get(endpoints['activity-detail'](activityID));
-      setSelectedActivity({
-        ...response.data,
-        isExpired: isActivityExpired(response.data.date_register),
-      });
-    } catch (error) {
-      console.error(error);
-    }
+  const handleViewDetails = (activityID) => {
+    navigation.navigate('ActivityStack', { screen: 'ActivityDetail', params: {activityID}});
   };
 
   const handleLoadMore = () => {
@@ -120,30 +103,26 @@ const ActivityListScreen = () => {
 
   return (
     <View style={styles.container}>
-      {selectedActivity ? (
-        <ActivityDetails activity={selectedActivity} onBack={() => setSelectedActivity(null)} />
-      ) : (
-        <FlatList
-          data={activities}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderActivityItem}
-          onEndReached={handleLoadMore}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-            />
-          }
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={() => (
-            nextPage ? (
-              <View style={styles.loadMoreContainer}>
-                <Text style={styles.loadMoreText}>Loading more...</Text>
-              </View>
-            ) : null
-          )}
-        />
-      )}
+      <FlatList
+        data={activities}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderActivityItem}
+        onEndReached={handleLoadMore}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() => (
+          nextPage ? (
+            <View style={styles.loadMoreContainer}>
+              <Text style={styles.loadMoreText}>Loading more...</Text>
+            </View>
+          ) : null
+        )}
+      />
     </View>
   );
 };

@@ -75,35 +75,37 @@ const BulletinDetailScreen = ({ route }) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-        <Image source={{ uri: bulletin.author.avatar }} style={styles.avatar} />
-        <View style={styles.headerText}>
-          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.username}>
-            {bulletin.author.first_name} {bulletin.author.last_name}
-          </Text>
-          <Text style={styles.date}>{moment(bulletin.created_date).fromNow()}</Text>
+      <View style={styles.postContainer}>
+        <View style={styles.header}>
+          <Image source={{ uri: bulletin.author.avatar }} style={styles.avatar} />
+          <View style={styles.headerText}>
+            <Text style={styles.username}>
+              {bulletin.author.first_name} {bulletin.author.last_name}
+            </Text>
+            <Text style={styles.date}>{moment(bulletin.created_date).fromNow()}</Text>
+          </View>
         </View>
-      </View>
-      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>
-        {bulletin.title}
-      </Text>
-      <Image source={{ uri: bulletin.image }} style={styles.image} />
-      <Text style={styles.content}>{bulletin.content}</Text>
-      <View style={styles.bottom}>
-        <IconButton
-          icon={liked ? 'thumb-up' : 'thumb-up-outline'}
-          size={24}
-          onPress={handleLiked}
-          style={styles.likeButton}
-        />
-        <Text style={styles.likeText}>{liked ? 'Đã thích' : 'Thích'}</Text>
-        <CustomButton 
-          onPress={handleModalVisible}
-          title="Bình luận"
-          color="#007bff" // Màu sắc của nút
-          textColor="#fff" // Màu sắc chữ
-          style={styles.customButton} // Custom style nếu cần thiết
-        />
+        <Text style={styles.title}>{bulletin.title}</Text>
+        <Image source={{ uri: bulletin.image }} style={styles.image} />
+        <Text style={styles.content}>{bulletin.content}</Text>
+        <View style={styles.actions}>
+          <IconButton
+            icon={liked ? 'thumb-up' : 'thumb-up-outline'}
+            size={24}
+            onPress={handleLiked}
+            style={styles.likeButton}
+          />
+          <Text style={styles.likeText}>{liked ? 'Đã thích' : 'Thích'}</Text>
+          <CustomButton 
+            onPress={handleModalVisible}
+            title="Bình luận"
+            icon="comment-outline" // Icon from react-native-paper
+            iconSize={20}
+            backgroundColor="#007bff"
+            textColor="#fff"
+            style={styles.customButton}
+          />
+        </View>
       </View>
       <CommentSection visible={modalVisible} onClose={handleCloseModal} bulletinID={bulletin.id} />
       <View style={styles.commentsContainer}>
@@ -118,97 +120,85 @@ const BulletinDetailScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#fff',
   },
   contentContainer: {
-    alignItems: 'center',
-    overflow: 'hidden',
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
-  bulletin: {
-    borderWidth: 1,
-    borderRadius: 20,
-    width: '95%',
-    marginBottom: 10,
-    alignSelf: 'center',
+  postContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.0,
+    elevation: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginBottom: 10,
-    width: '100%',
-    maxWidth: '100%',
-    overflow: 'hidden',
+    marginBottom: 8,
   },
   headerText: {
-    maxWidth: '85%',
-  },
-  bottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    maxWidth: '100%',
+    marginLeft: 8,
   },
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 25,
-    marginRight: 10,
+    borderRadius: 20,
   },
   username: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  hashtag: {
-    fontSize: 16,
-    marginBottom: 10,
-    alignSelf: 'flex-start',
-    color: 'lightblue',
-    fontWeight: 'bold',
+  date: {
+    fontSize: 12,
+    color: '#777',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
-    width: '100%',
+    marginBottom: 8,
   },
   image: {
     width: '100%',
     height: 200,
-    marginBottom: 10,
+    borderRadius: 10,
+    marginBottom: 8,
   },
   content: {
     fontSize: 16,
     lineHeight: 24,
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  button: {
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  likeButton: {
+    marginRight: 8,
+  },
+  likeText: {
+    fontSize: 14,
+    color: '#777',
+    marginRight: 16,
+  },
+  customButton: {
+    marginLeft: 'auto',
+  },
+  commentsContainer: {
+    marginTop: 12,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  commentsContainer: {
-    width: '100%',
-  },
-  likeButton: {
-    marginRight: 5,
-  },
-  likeText: {
-    fontSize: 16,
-    marginRight: 15,
-  },
-  customButton: {
-    marginLeft: 10, // Custom style nếu cần thiết
   },
 });
 

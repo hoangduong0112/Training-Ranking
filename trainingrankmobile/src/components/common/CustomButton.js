@@ -50,17 +50,17 @@ const CustomButton = ({
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    flexDirection: 'row', 
+    flexDirection: 'row',
   },
   buttonText: {
     fontWeight: 'bold',
   },
   content: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     alignItems: 'center',
   },
   icon: {
-    marginRight: 8, 
+    marginRight: 8,
   },
 });
 

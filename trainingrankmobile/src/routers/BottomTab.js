@@ -5,7 +5,7 @@ import Theme from '../styles/MyTheme';
 import ActivityListScreen from '../screens/activities/ActivityListScreen';
 import BulletinListScreen from '../screens/bulletins/BulletinListScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
-import CreatedActivitiesScreen from '../screens/profile/CreatedActivities';
+import ManagementScreen from '../screens/management/ManagementScreen';
 import { useUser } from '../stores/contexts/UserContext';
 const Tab = createBottomTabNavigator();
 
@@ -61,7 +61,7 @@ const BottomTab = () => {
       {userData.user_role === 'TLSV' || userData.user_role === 'CV' ? (
         <Tab.Screen
           name="Management"
-          component={CreatedActivitiesScreen}
+          component={ManagementScreen}
           options={{ tabBarLabel: 'Quản trị' }}
         />
       ) : null}

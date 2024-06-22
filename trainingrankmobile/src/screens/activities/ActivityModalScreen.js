@@ -6,6 +6,7 @@ import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const ActivityModalScreen = ({ navigation, route }) => {
+  const { activityId } = route.params || {};
   const [title, setTitle] = useState('');
   const [dateRegister, setDateRegister] = useState(new Date());
   const [location, setLocation] = useState('');
@@ -18,7 +19,27 @@ const ActivityModalScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchStatuteList();
-  }, []);
+    if (activityId) {
+      fetchActivityDetails(activityId);
+    }
+  }, [activityId]);
+
+  const fetchActivityDetails = async (id) => {
+    try {
+      const { accessToken } = await getTokens();
+      const response = await authAPI(accessToken).get(endpoints['activity-detail'](id));
+      const activity = response.data;
+      setTitle(activity.title);
+      setDateRegister(new Date(activity.date_register));
+      setLocation(activity.location);
+      setDescription(activity.description);
+      setPoints(activity.points.toString());
+      setStatute(activity.statute);
+    } catch (error) {
+      console.error('Error fetching activity details:', error);
+      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tải thông tin hoạt động. Vui lòng thử lại sau.');
+    }
+  };
 
   const fetchStatuteList = async () => {
     try {
@@ -60,6 +81,7 @@ const ActivityModalScreen = ({ navigation, route }) => {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
+
   const handleSubmit = async () => {
     try {
       const { accessToken } = await getTokens();
@@ -70,19 +92,32 @@ const ActivityModalScreen = ({ navigation, route }) => {
       formData.append('description', description);
       formData.append('points', points);
       formData.append('statute', statute);
-
-      const response = await authAPI(accessToken).post(endpoints['activities'], formData);
-      Alert.alert('Thông báo', 'Tạo hoạt động thành công!', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+  
+      let response;
+      if (activityId) {
+        
+        response = await authAPI(accessToken).patch(endpoints['activity-detail'](activityId), formData);
+        Alert.alert('Thông báo', 'Cập nhật hoạt động thành công!', [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]);
+      } else {
+        response = await authAPI(accessToken).post(endpoints['activities'], formData);
+        Alert.alert('Thông báo', 'Tạo hoạt động thành công!', [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]);
+      }
     } catch (error) {
-      console.error('Error creating activity:', error);
+      console.error('Error saving activity:', error);
       Alert.alert('Lỗi', 'Đã xảy ra lỗi khi lưu hoạt động. Vui lòng thử lại sau.');
     }
   };
+  
 
   return (
     <ScrollView style={styles.container}>
@@ -158,7 +193,7 @@ const ActivityModalScreen = ({ navigation, route }) => {
       </Picker>
 
       <View style={styles.buttonContainer}>
-        <Button title="Tạo mới" onPress={handleSubmit} />
+        <Button title={activityId ? "Cập nhật" : "Tạo mới"} onPress={handleSubmit} />
       </View>
     </ScrollView>
   );

@@ -27,10 +27,22 @@ class IsAssistantOrSpecialistUser(permissions.BasePermission):
 class CanCreateUser(permissions.BasePermission):
     def has_permission(self, request, view):
         user_role = request.data.get('user_role')
-        if request.user.user_role == 'ADMIN':
+        if not request.user.is_authenticated:
+            if user_role == 'SV':
+                return True
+        elif request.user.user_role in ['ADMIN', 'CV']:
             return True
-        if request.user.user_role == 'CV' and user_role == 'TLSV':
-            return True
-        if user_role == 'TLSV':
+        elif request.user.user_role == 'TLSV':
             return False
-        return True
+        return False
+
+
+class IsOwnerOrCVOrTLSV(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.user.user_role in ['CV', 'TLSV']:
+            return True
+
+        if request.user.user_role == 'SV' and obj.author == request.user:
+            return True
+
+        return False

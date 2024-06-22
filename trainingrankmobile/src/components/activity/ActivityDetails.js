@@ -4,16 +4,19 @@ import { authAPI, endpoints } from '../../configs/APIs';
 import { getTokens } from '../../utils/utils';
 import CustomButton from '../common/CustomButton';
 import { useNavigation } from '@react-navigation/native';
+import { useUser } from '../../stores/contexts/UserContext';
 
 const ActivityDetails = ({ activity, onBack }) => {
   const navigation = useNavigation();
   const [statute, setStatute] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState(activity.status);
+  const { data: userData } = useUser();
+  const [activityDetails, setActivityDetails] = useState(activity);
 
   useEffect(() => {
-    fetchStatute(activity.statute);
-  }, [activity.statute]);
+    fetchStatute(activityDetails.statute);
+  }, [activityDetails.statute]);
 
   const fetchStatute = async (statuteId) => {
     try {
@@ -25,10 +28,22 @@ const ActivityDetails = ({ activity, onBack }) => {
     }
   };
 
+  const fetchActivityDetails = async () => {
+    try {
+      const { accessToken } = await getTokens();
+      const response = await authAPI(accessToken).get(endpoints['activity-detail'](activity.id));
+      setActivityDetails(response.data);
+      setStatus(response.data.status);
+    } catch (error) {
+      console.error('Error fetching activity details:', error);
+    }
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetchStatute(activity.statute);
+      await fetchActivityDetails();
+      await fetchStatute(activityDetails.statute);
     } catch (error) {
       console.error(error);
     } finally {
@@ -40,18 +55,16 @@ const ActivityDetails = ({ activity, onBack }) => {
     try {
       const { accessToken } = await getTokens();
       const response = await authAPI(accessToken).post(endpoints['activity-register'](activityId));
-      console.log(response.data);
       setStatus(response.data.status);
+      fetchActivityDetails(); 
     } catch (error) {
       console.error(error);
     }
   };
 
-  
   const navigateToReport = (id) => {
     navigation.navigate('ActivityStack', { screen: 'ReportForm', params: { id } });
   };
-
 
   return (
     <ScrollView
@@ -59,52 +72,76 @@ const ActivityDetails = ({ activity, onBack }) => {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
     >
       <View style={styles.headerContainer}>
-        <Image source={{ uri: activity.assistant_creator.avatar }} style={styles.avatar} />
+        <Image source={{ uri: activityDetails.assistant_creator.avatar }} style={styles.avatar} />
         <View style={styles.assistantInfo}>
-          <Text style={styles.assistantName}>{activity.assistant_creator.first_name} {activity.assistant_creator.last_name}</Text>
-          <Text style={styles.createdDate}>Ngày tạo: {new Date(activity.date_register).toLocaleDateString()}</Text>
+          <Text style={styles.assistantName}>{activityDetails.assistant_creator.first_name} {activityDetails.assistant_creator.last_name}</Text>
+          <Text style={styles.createdDate}>Ngày tạo: {new Date(activityDetails.date_register).toLocaleDateString()}</Text>
         </View>
       </View>
-      <Text style={styles.title}>Hoạt động: {activity.title}</Text>
-      <Text style={styles.description}>Mô tả: {activity.description}</Text>
-      <Text style={styles.location}>Vị trí tổ chức: {activity.location}</Text>
-      <Text style={styles.date}>Ngày: {new Date(activity.date_register).toLocaleDateString()}</Text>
-      <Text style={styles.points}>Điểm cộng: {activity.points}</Text>
-      <Text style={styles.status}>Trạng thái: {status === 'attended' ? 'Đã tham gia' : 'Chưa tham gia'}</Text>
-      <View style={styles.assistantContainer}>
-        <Text style={styles.assistantTitle}>Người đại diện:</Text>
-        <Text style={styles.assistantName}>Họ tên: {activity.assistant_creator.first_name} {activity.assistant_creator.last_name}</Text>
-        <Text style={styles.assistantEmail}>Email: {activity.assistant_creator.email}</Text>
+      <Text style={styles.title}>Hoạt động: {activityDetails.title}</Text>
+      <Text style={styles.description}>Mô tả: {activityDetails.description}</Text>
+      <Text style={styles.location}>Vị trí tổ chức: {activityDetails.location}</Text>
+      <Text style={styles.date}>Ngày: {new Date(activityDetails.date_register).toLocaleDateString()}</Text>
+      <Text style={styles.points}>Điểm cộng: {activityDetails.points}</Text>
+      
+      <View>
+        {(userData.user_role === 'SV' && activityDetails.isExpired) && (
+          <>
+            <Text style={styles.status}>Trạng thái: {status === 'attended' ? 'Đã tham gia' : 'Chưa tham gia'}</Text>
+            <Text style={styles.expiredText}>Hoạt động đã kết thúc</Text>
+            <CustomButton 
+              title={status === 'registered' ? 'Hủy Đăng ký' : 'Đăng ký'}
+              onPress={() => handleRegister(activityDetails.id)}
+              backgroundColor={status === 'registered' ? '#dc3545' : '#28a745'}
+            />
+          </>
+        )}
       </View>
-      {activity.isExpired ? (
-        <Text style={styles.expiredText}>Hoạt động đã kết thúc</Text>
-      ) : (
-        <CustomButton 
-          title={status === 'registered' ? 'Hủy Đăng ký' : 'Đăng ký'}
-          onPress={() => handleRegister(activity.id)}
-          backgroundColor={status === 'registered' ? '#dc3545' : '#28a745'}
-        />
-      )}
+
       {statute && (
         <View style={styles.statuteContainer}>
           <Text style={styles.statuteTitle}>Chi tiết Quy định:</Text>
           <Text style={styles.statuteName}>Tên: {statute.statute_name}</Text>
           <Text style={styles.statuteMaxPoints}>Điểm tối đa: {statute.max_point}</Text>
-          <Text style={styles.statuteDescription}>Mô tả: {statute.description}</Text>
         </View>
       )}
-      <CustomButton 
-        title="Báo cáo"
-        onPress={() => navigateToReport(activity.id)}
-        backgroundColor="#ff6347"
-        style={styles.spacing} // Added spacing
-      />
-      <CustomButton 
-        title="Trở về danh sách hoạt động"
-        onPress={onBack}
-        backgroundColor="#6c757d"
-        style={styles.spacing} // Added spacing
-      />
+      
+      {userData.user_role === 'SV' && (
+        <>
+          <CustomButton 
+            title="Báo cáo"
+            onPress={() => navigateToReport(activityDetails.id)}
+            backgroundColor="#ff6347"
+            style={styles.spacing}
+          />
+          <CustomButton 
+            title="Trở về danh sách hoạt động"
+            onPress={onBack}
+            backgroundColor="#6c757d"
+            style={styles.spacing}
+          />
+        </>
+      )}
+      
+      {(userData.user_role === 'TLSV' || userData.user_role === 'CV') && (
+        <>
+          <CustomButton 
+            title="Sinh viên đăng ký"
+            onPress={() => navigation.navigate('ManagementStack', { screen: 'RegisteredStudentScreen', params: { activityId: activityDetails.id } })}
+            backgroundColor="#ff6347"
+            style={styles.spacing}
+          />
+          {(userData.email === activityDetails.assistant_creator.email || activityDetails.isExpired ) && (
+            <CustomButton 
+              title="Chỉnh sửa"
+              onPress={() => navigation.navigate('ActivityStack', { screen: 'ActivityModal', params: { activityId: activityDetails.id } })}
+              backgroundColor="#ff6347"
+              style={styles.spacing}
+            />
+          )}
+        </>
+      )}
+
     </ScrollView>
   );
 };
@@ -162,18 +199,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
   },
-  assistantContainer: {
-    marginBottom: 16,
-  },
-  assistantTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  assistantEmail: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
   expiredText: {
     fontSize: 14,
     color: 'red',
@@ -197,9 +222,6 @@ const styles = StyleSheet.create({
   statuteMaxPoints: {
     fontSize: 16,
     marginBottom: 4,
-  },
-  statuteDescription: {
-    fontSize: 16,
   },
   spacing: {
     marginVertical: 8,

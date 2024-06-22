@@ -19,21 +19,21 @@ const CreateBulletinScreen = ({ navigation }) => {
   const fetchAllActivities = async () => {
     try {
       const { accessToken } = await getTokens();
-      let nextPage = endpoints['activities'];
+      let nextPage = `${endpoints['activities']}?finished=True`;
       let allActivities = [];
-
+  
       while (nextPage) {
         const response = await authAPI(accessToken).get(nextPage);
         allActivities = allActivities.concat(response.data.results);
-        nextPage = response.data.next;
+        nextPage = response.data.next;  
       }
-
+  
       setActivities(allActivities);
     } catch (error) {
       console.error('Error fetching activities:', error);
     }
   };
-
+  
   const selectImage = async () => {
     try {
       let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -44,13 +44,13 @@ const CreateBulletinScreen = ({ navigation }) => {
 
       let pickerResult = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 1,
       });
 
       if (!pickerResult.cancelled) {
-        setImage(pickerResult.uri);
+        setImage(pickerResult.assets[0].uri);
       }
     } catch (error) {
       console.error('Error selecting image:', error);

@@ -68,11 +68,16 @@ class UserSerializer(serializers.ModelSerializer):
     #     if value == 'ADMIN':
     #         raise serializers.ValidationError("You cannot set the role to 'admin'.")
     #     return value
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        rep['avatar'] = instance.avatar.url
 
-        return rep
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        avatar = data.get("avatar")
+
+        if "avatar" in self.fields and avatar:
+            data["avatar"] = instance.avatar.url
+
+        return data
+
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
@@ -107,10 +112,20 @@ class AuthenticatedDetailActivitySerializer(ActivitySerializer):
 
 
 class StudentActivitySerializer(serializers.ModelSerializer):
+    registered_students = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = StudentActivity
-        fields = ['user', 'activity', 'semester', 'status']
+        fields = ['user', 'activity', 'semester', 'status', 'registered_students']
         read_only_fields = ['status']
+
+
+    def get_registered_students(self, obj):
+        user = obj.user
+        return user.email if user else None
+
+
+
 
     def create(self, validated_data):
         validated_data['status'] = 'registered'
@@ -187,11 +202,15 @@ class SemesterStatutePointsSerializer(serializers.Serializer):
 class MissingActivityReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = MissingActivityReport
-        fields = ['student_activity', 'reason', 'proof', 'status']
+        fields = ['id' ,'student_activity', 'reason', 'proof', 'status']
         read_only_fields = ['status']
 
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        rep['proof'] = instance.proof.url
 
-        return rep
+def to_representation(self, instance):
+    data = super().to_representation(instance)
+    image = data.get("proof")
+
+    if "proof" in self.fields and image:
+        data["proof"] = instance.image.url
+
+    return data

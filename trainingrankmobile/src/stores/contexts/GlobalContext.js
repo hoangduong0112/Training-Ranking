@@ -3,18 +3,13 @@ import { createContext, useContext, useState } from 'react';
 export const GlobalContext = createContext(null);
 
 export const GlobalProvider = ({ children }) => {
-   const [semester, setSemester] = useState(null);
-   const [loading, setLoading] = useState(false);
-   const [isRendered, setIsRendered] = useState(false);
+   const [semester, setSemester] = useState(null)
    const [refreshing, setRefreshing] = useState(false);
 
    const globalValue = {
       semester,
       setSemester,
-      loading,
-      setLoading,
-      isRendered,
-      setIsRendered,
+   
       refreshing,
       setRefreshing,
    };

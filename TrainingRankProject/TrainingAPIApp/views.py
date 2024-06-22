@@ -1,7 +1,6 @@
 import csv
-import logging
-
 from django.db.models import Sum, Q
+from django.utils import timezone
 from rest_framework import viewsets, generics, status, parsers, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,7 +10,7 @@ from . import paginators
 from .models import Klass, Department, User, Bulletin, Comment, Like, Activity, StudentActivity, Semester, \
     MissingActivityReport, Statute, Student
 from .paginators import ActivityPaginator
-from .perms import IsStudentUser, IsAssistantUser, IsSpecialistUser, CanCreateUser
+from .perms import IsStudentUser, IsAssistantUser, IsSpecialistUser, CanCreateUser, IsOwnerOrCVOrTLSV
 from .serializers import KlassSerializer, DepartmentSerializer, UserSerializer, \
     StudentSerializer, BulletinSerializer, CommentSerializer, AuthenticatedBulletinSerializer, ActivitySerializer, \
     StudentActivitySerializer, StudentActivityDetailSerializer, SemesterStatutePointsSerializer, \
@@ -37,12 +36,10 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
     serializer_class = UserSerializer
 
     def get_permissions(self):
-        if self.action in ['activities', 'points']:
-            permission_classes = [IsAssistantUser | IsSpecialistUser]
-        elif self.action in ['my-total-points', 'my-activities', 'my-total-points']:
-            permission_classes = [IsStudentUser]
-        elif self.action in ['current-user', 'update']:
+        if self.action in ['current-user', 'update']:
             permission_classes = [IsAuthenticated]
+        elif self.action in ['activities', 'points']:
+            permission_classes = [IsOwnerOrCVOrTLSV]
         elif self.action in ['create']:
             permission_classes = [CanCreateUser]
         else:
@@ -73,7 +70,6 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    #Get hoat dong cua sinh vien (can pk) - TL & CV
     @action(methods=["get"], detail=True, url_path="activities")
     def get_activities(self, request, pk=None):
         user = self.get_object()
@@ -90,7 +86,6 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
         serializer = ActivitySerializer(activities, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-    #get current user
     @action(methods=['get'], url_path="current-user", detail=False)
     def get_current(self, request):
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
@@ -99,7 +94,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
     @action(detail=True, methods=['get'], url_path='points')
     def points_activity(self, request, pk):
         user = User.objects.get(id=pk)
-        attended_activities = StudentActivity.objects.filter(student=user, status='attended')
+        attended_activities = StudentActivity.objects.filter(user=user, status='attended')
         total_points_by_semester = attended_activities.values('semester__semester_name', 'activity__statute').annotate(
             total_points=Sum('activity__points')).order_by('semester__semester_name', 'activity__statute')
 
@@ -221,6 +216,13 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
+    def get_queryset(self):
+        queries = self.queryset
+
+        q = self.request.query_params.get("finished")
+        if q:
+            queries = queries.filter(date_register__gt=timezone.now())
+        return queries
 
     def get_serializer_class(self):
         if self.request.user.is_authenticated:
@@ -255,7 +257,7 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
     @action(methods=['get'], detail=True, url_path='students')
     def get_students(self, request, pk):
         student_activity = StudentActivity.objects.filter(activity_id=pk)
-
+        student = Student.objects.filter()
         return Response(StudentActivitySerializer(student_activity, many=True).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='upload-attendance')
@@ -274,7 +276,7 @@ class ActivityViewSet(viewsets.ViewSet, generics.ListCreateAPIView, generics.Upd
         users = []
 
         for row in reader:
-            email = row[0]  # Truy xuất email từ danh sách các giá trị của hàng
+            email = row[0]
 
             try:
                 user = User.objects.get(email=email)
@@ -368,24 +370,10 @@ class StudentActivitiesViewSet(viewsets.ViewSet, generics.ListAPIView):
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
-    @action(methods=["post"], detail=False, url_path="attendance")
-    def attendace(self, request):
-        file = request.FILES.get("file", None)
-        if not file or not file.name.endswith(".csv"):
-            return Response(data={"detail": "Vui lòng upload file có định dạng là csv"},
-                            status=status.HTTP_400_BAD_REQUEST)
+    @action(methods=["post"], detail=True, url_path="attendance")
+    def attendace(self, request, pk):
+        student_activity = self.get_object()
+        student_activity.status = 'attended'
+        student_activity.save()
 
-        csv_data = csv.reader(file.read().decode("utf-8").splitlines())
-        next(csv_data)
-        for row in csv_data:
-            user_name, activity_id = row
-
-            try:
-                registration = StudentActivity.objects.select_related("user", "activity") \
-                    .get(user=user_name, activity_id=activity_id)
-            except (Student.DoesNotExist, Activity.DoesNotExist, StudentActivity.DoesNotExist):
-                continue
-
-                registration.save()
-
-        return Response(data={"detail": "Upload file điểm danh thành công"}, status=status.HTTP_200_OK)
+        return Response(StudentActivitySerializer(student_activity).data, status=status.HTTP_200_OK)

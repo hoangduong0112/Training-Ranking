@@ -56,11 +56,11 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleActivityHistoryPress = () => {
-    navigation.navigate('ProfileStack', {screen: 'MyActivities'});
+    navigation.navigate('ProfileStack', { screen: 'MyActivities' });
   };
 
-  const handleMissingReportHistoryPress = () => {
-    navigation.navigate('MissingReportHistory');
+  const handlePointsPress = () => {
+    navigation.navigate('ProfileStack', { screen: 'MyPoints' });
   };
 
   if (loading) {
@@ -73,9 +73,10 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {user ? (
+      <ProfileSection user={user} onEditPress={handleEditPress} onLogoutPress={handleLogoutPress} />
+      
+      {user.user_role === 'SV' && (
         <>
-          <ProfileSection user={user} onEditPress={handleEditPress} onLogoutPress={handleLogoutPress} />
           <CustomButton 
             onPress={handleActivityHistoryPress} 
             title="Lịch sử hoạt động" 
@@ -83,21 +84,20 @@ const ProfileScreen = ({ navigation }) => {
             style={styles.button}
           />
           <CustomButton 
-            onPress={handleMissingReportHistoryPress} 
-            title="Lịch sử báo thiếu" 
-            icon="alert" // Assuming you have an icon named 'alert' in react-native-paper
-            style={styles.button}
-          />
-          <CustomButton 
-            onPress={handleLogoutPress} 
-            title="Đăng xuất" 
-            icon="logout" // Assuming you have an icon named 'logout' in react-native-paper
+            onPress={handlePointsPress} 
+            title="Điểm số" 
+            icon="text-box-check" 
             style={styles.button}
           />
         </>
-      ) : (
-        <Text>Không thể tải thông tin người dùng.</Text>
       )}
+
+      <CustomButton 
+        onPress={handleLogoutPress} 
+        title="Đăng xuất" 
+        icon="logout" 
+        style={styles.button}
+      />
     </ScrollView>
   );
 };

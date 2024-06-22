@@ -1,6 +1,6 @@
-// components/BulletinCard.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import moment from 'moment'; // Import moment correctly
 
 const BulletinCard = ({ bulletin, onPress }) => {
   return (
@@ -10,7 +10,8 @@ const BulletinCard = ({ bulletin, onPress }) => {
       )}
       <Text style={styles.title}>{bulletin.title}</Text>
       <Text style={styles.content}>{bulletin.content}</Text>
-      <Text style={styles.date}>Created Date: {bulletin.created_date}</Text>
+      <Text style={styles.date}>Ngày đăng: {moment(bulletin.created_date).fromNow()}</Text>
+      {/* Use moment() to format date */}
     </TouchableOpacity>
   );
 };
